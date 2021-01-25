@@ -1,44 +1,56 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+
 public class PlayerMovement : MonoBehaviour
 {
     public KeyCode up;
     public KeyCode down;
     public KeyCode right;
     public KeyCode left;
-    public float direction = .3f;
     public float time;
     public float screenOffset = 5;
-    public float maxMoveTimer;
+    public float direction = 1;
+    public bool hasMoved;
+
     public Vector3 screenPos;
     public Vector3 heightwidth;
+
     public GameObject gameOverUI;
     public GameObject snakeBodyPart;
+    public AudioSource walkingSound;
+    public AudioSource eatingSound;
+
     public FoodSpawner foodSpawner;
-    public UIManager scoreUI;
+    public UIManager uiManager;
+    public GameOverManager gameOverManager;
+
     public int points;
    
+    float maxMoveTimer;
     float moveTimer;
+    float timeMovementReset;
+    bool gameOverActivated;
+    bool StartedGame;
     Vector2 position;
     Vector2 moveToPosition;
-
     private int snakeSize;
-    public List<Vector2> snakePositionList;
-
-    bool gameOverActivated;
-
+    private List<Vector2> snakePositionList;
+   
+  
+   
     private void Awake()
     {
         maxMoveTimer = time;
         moveTimer = maxMoveTimer;
         gameOverUI.SetActive(false);
         snakePositionList = new List<Vector2>();
+        StartedGame = false;
     }
     private void Start()
     {
         foodSpawner.SpawnFood();
         points = 0;
-        scoreUI.SaveHighScore();
+        uiManager.SaveHighScore();
     }
     void Update()
     {
@@ -46,50 +58,93 @@ public class PlayerMovement : MonoBehaviour
         AutomaticMovement();
         PlayerOffScreen();
         GameOver();
+
+        if (hasMoved)
+        {
+            timeMovementReset += Time.deltaTime;
+            if (timeMovementReset >= maxMoveTimer)
+            {
+                hasMoved = false;
+                timeMovementReset = 0;
+            }
+        }
     }
 
     public void PlayerInput()
     {
-        if (Input.GetKeyDown(up))
+        /*Source: CodeMonkey:Making Snake in Unity: Movements https://www.youtube.com/watch?v=0vFucqblH-g&list=PLzDRvYVwl53ucaUs0YGfyyKXdgqh5OtiK&index=2&ab_channel=CodeMonkey*/
+        if (!hasMoved)
         {
-            if (moveToPosition.y != -1)
+            if (Input.GetKeyDown(up))
             {
-                moveToPosition.x = 0;
-                moveToPosition.y = +1;
-            }
-        }
+                if (moveToPosition.y != -direction)
+                {
+                    hasMoved = true;
+                    moveToPosition.x = 0;
+                    moveToPosition.y = +direction;
 
-        if (Input.GetKeyDown(down))
-        {
-            if (moveToPosition.y != 1)
-            {
-                moveToPosition.x = 0;
-                moveToPosition.y = -1;
-            }
-        }
-
-        if (Input.GetKeyDown(right))
-        {
-            if (moveToPosition.x != -1)
-            {
-                moveToPosition.x = +1;
-                moveToPosition.y = 0;
+                    if (!StartedGame)
+                        StartedGame = true;
+                }
             }
 
-        }
-
-        if (Input.GetKeyDown(left))
-        {
-            if (moveToPosition.x != 1)
+            if (Input.GetKeyDown(down))
             {
-                moveToPosition.x = -1;
-                moveToPosition.y = 0;
+                if (moveToPosition.y != direction)
+                {
+                    hasMoved = true;
+                    moveToPosition.x = 0;
+                    moveToPosition.y = -direction;
+
+                    if (!StartedGame)
+                        StartedGame = true;
+                }
+            }
+
+            if (Input.GetKeyDown(right))
+            {
+                if (moveToPosition.x != -direction)
+                {
+                    hasMoved = true;
+                    moveToPosition.x = +direction;
+                    moveToPosition.y = 0;
+
+                    if (!StartedGame)
+                        StartedGame = true;
+                }
+
+            }
+
+            if (Input.GetKeyDown(left))
+            {
+                if (moveToPosition.x != direction)
+                {
+                    hasMoved = true;
+                    moveToPosition.x = -direction;
+                    moveToPosition.y = 0;
+
+                    if (!StartedGame)
+                        StartedGame = true;
+                }
+            }
+
+
+            if (Input.GetKeyDown(KeyCode.D))
+            {
+                PlayerPrefs.DeleteAll();
+                uiManager.SaveHighScore();
+            }
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                gameOverManager.OnClickQuitGame();
             }
         }
     }
 
     public void AutomaticMovement()
     {
+        /*Source: CodeMonkey: Making Snake in Unity: Snake Grow: https://www.youtube.com/watch?v=KifUCu1LLgs&list=PLzDRvYVwl53ucaUs0YGfyyKXdgqh5OtiK&index=4&ab_channel=CodeMonkey*/
         moveTimer += Time.deltaTime;
         if (moveTimer >= maxMoveTimer)
         {
@@ -102,6 +157,9 @@ public class PlayerMovement : MonoBehaviour
                 snakePositionList.RemoveAt(snakePositionList.Count - 1);
             }
 
+            if (StartedGame)
+                walkingSound.Play();
+
            for(int i = 0; i < snakePositionList.Count; i++)
             {
                 Vector2 snakeBodyPosition = snakePositionList[i];
@@ -111,11 +169,14 @@ public class PlayerMovement : MonoBehaviour
             }
             transform.position = new Vector3(position.x, position.y);
             transform.eulerAngles = new Vector3(0, 0, PlayerAngle(moveToPosition) - 90);
+
         }
     }
 
     public float PlayerAngle(Vector2 dir)
     {
+        /*Source: CodeMonkey:Making Snake in Unity: Movements https://www.youtube.com/watch?v=0vFucqblH-g&list=PLzDRvYVwl53ucaUs0YGfyyKXdgqh5OtiK&index=2&ab_channel=CodeMonkey*/
+
         float n = Mathf.Atan2(dir.x, dir.y) * Mathf.Rad2Deg;
         if (n < 0)
             n += 360;
@@ -126,10 +187,12 @@ public class PlayerMovement : MonoBehaviour
         screenPos = Camera.main.WorldToScreenPoint(transform.position);
         heightwidth.x = Screen.width;
         heightwidth.y = Screen.height;
-        if (screenPos.x > heightwidth.x
-            || screenPos.x < 0f
-            || screenPos.y > heightwidth.y
-            || screenPos.y < 0f)
+
+       
+        if (screenPos.x >= (heightwidth.x-screenOffset)
+            || screenPos.x <= screenOffset
+            || screenPos.y >= (heightwidth.y-screenOffset) 
+            || screenPos.y <= screenOffset)
             
             gameOverActivated = true;
                 
@@ -144,6 +207,8 @@ public class PlayerMovement : MonoBehaviour
             Destroy(coll.gameObject);
             points++;
             snakeSize++;
+            ParticleExplosion();
+            eatingSound.Play();
         }
 
         if (coll.gameObject.tag == "Player")
@@ -158,10 +223,16 @@ public class PlayerMovement : MonoBehaviour
         if (gameOverActivated)
         {
             gameOverUI.SetActive(true);
-            scoreUI.SaveHighScore();
+            uiManager.SaveHighScore();
             Time.timeScale = 0;
         }
         else
             Time.timeScale = 1;
+    }
+
+    public void ParticleExplosion()
+    {
+        ParticleSystem particleSystem = GetComponent<ParticleSystem>();
+        particleSystem.Play();
     }
 }

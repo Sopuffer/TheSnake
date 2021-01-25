@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class FoodSpawner : MonoBehaviour
 {
@@ -13,7 +11,6 @@ public class FoodSpawner : MonoBehaviour
     public Collider2D[] colliders;
     public float radius;
    
-
     public void SpawnFood()
     {
         bool canSpawnHere = false;

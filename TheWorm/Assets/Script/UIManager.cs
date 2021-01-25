@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 
 public class UIManager : MonoBehaviour
@@ -15,16 +13,15 @@ public class UIManager : MonoBehaviour
     public float maxSeconds = 60;
     public float maxMinutes = 10;
 
-    float belowTime = 10;
+    float numberLimit = 10;
     int highScore;
 
     private void Update()
     {
-
         TrackingScore();
-        
         CurrentTime();
     }
+
     public void SaveHighScore()
     {
         int score = playerMovement.points;
@@ -33,22 +30,29 @@ public class UIManager : MonoBehaviour
         {
             highScore = score;
             PlayerPrefs.SetInt("HighScore", highScore);
-        }
+        }    
  
     }
 
     public void TrackingScore()
     {
-        if (playerMovement.points < 10)
+        if (playerMovement.points < numberLimit)
         {
             scoreText.text = "Current Score: 0" + playerMovement.points.ToString();
-            Debug.Log("hello");
         }
         else
         {
             scoreText.text = "Current Score: " + playerMovement.points.ToString();
         }
-        highscoreText.text = "High Score: " + highScore.ToString();
+
+        if (highScore < numberLimit)
+        {
+            highscoreText.text = "High Score: 0" + highScore.ToString();
+        }
+        else
+        {
+            highscoreText.text = "High Score: " + highScore.ToString();
+        }
     }
 
     public void CurrentTime()
@@ -62,7 +66,7 @@ public class UIManager : MonoBehaviour
 
         if (minutes < maxMinutes)
         {
-            if (seconds < belowTime)
+            if (seconds < numberLimit)
             {
                 timeText.text = "Elapsed Time: 0" + (int)minutes + ":0" + (int)seconds;
             }
@@ -75,7 +79,7 @@ public class UIManager : MonoBehaviour
 
         else
         {
-            if (seconds < 10)
+            if (seconds < numberLimit)
             {
                 timeText.text = "Elapsed Time: " + (int)minutes + ":0" + (int)seconds;
             }

@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class DestroyBodyTimer : MonoBehaviour
 {
@@ -15,13 +13,13 @@ public class DestroyBodyTimer : MonoBehaviour
     }
     void Update()
     { 
-        maxTimer = playerMovement.maxMoveTimer;
+        maxTimer = playerMovement.time;
 
         timer += Time.deltaTime;
         if(timer >= maxTimer)
         {
             Destroy(gameObject);
-            timer -= playerMovement.maxMoveTimer;
+            timer -= playerMovement.time;
         }
     }
 }
